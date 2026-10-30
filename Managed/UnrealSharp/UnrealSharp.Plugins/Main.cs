@@ -57,33 +57,31 @@ internal static class Main
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void TryRegisterMSBuild()
     {
-        string? originalMSBuildExePath = Environment.GetEnvironmentVariable("MSBUILD_EXE_PATH");
-        string? originalMSBuildExtensionsPath = Environment.GetEnvironmentVariable("MSBuildExtensionsPath");
-        string? originalMSBuildSDKsPath = Environment.GetEnvironmentVariable("MSBuildSDKsPath");
-
-        try
+        string assemblyPath = typeof(Main).Assembly.Location;
+        DirectoryInfo? pluginRoot = new FileInfo(assemblyPath).Directory;
+        while (pluginRoot != null && !File.Exists(Path.Combine(pluginRoot.FullName, "UnrealSharp.uplugin")))
         {
-            var instance = Microsoft.Build.Locator.MSBuildLocator
-                .QueryVisualStudioInstances()
-                .OrderByDescending(i => i.Version)
-                .FirstOrDefault();
+            pluginRoot = pluginRoot.Parent;
+        }
 
-            if (instance != null)
-            {
-                Microsoft.Build.Locator.MSBuildLocator.RegisterInstance(instance);
-            }
-            else
-            {
-                Microsoft.Build.Locator.MSBuildLocator.RegisterDefaults();
-            }
-        }
-        finally
+        if (pluginRoot == null)
         {
-            // Keep MSBuild registered without leaking its SDK paths to Unreal build processes.
-            Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH", originalMSBuildExePath);
-            Environment.SetEnvironmentVariable("MSBuildExtensionsPath", originalMSBuildExtensionsPath);
-            Environment.SetEnvironmentVariable("MSBuildSDKsPath", originalMSBuildSDKsPath);
+            throw new DirectoryNotFoundException($"Could not locate the UnrealSharp plugin root from '{assemblyPath}'.");
         }
+
+        string platform = OperatingSystem.IsWindows() ? "win" : OperatingSystem.IsMacOS() ? "osx" : "linux";
+        string architecture = RuntimeInformation.ProcessArchitecture == Architecture.X64 ? "x64" : "arm64";
+        string sdkRoot = Path.Combine(pluginRoot.FullName, "ThirdParty", "DotNet", "sdk", $"{platform}-{architecture}", "sdk");
+        string? msBuildPath = Directory.Exists(sdkRoot)
+            ? Directory.GetDirectories(sdkRoot, "11.*").OrderByDescending(Path.GetFileName, StringComparer.Ordinal).FirstOrDefault()
+            : null;
+
+        if (msBuildPath == null || !File.Exists(Path.Combine(msBuildPath, "MSBuild.dll")))
+        {
+            throw new DirectoryNotFoundException($"The UnrealSharp .NET 11 SDK was not found at '{sdkRoot}'.");
+        }
+
+        Microsoft.Build.Locator.MSBuildLocator.RegisterMSBuildPath(msBuildPath);
     }
 #endif
 }

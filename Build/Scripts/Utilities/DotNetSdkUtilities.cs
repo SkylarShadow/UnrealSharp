@@ -1,5 +1,8 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using AutomationTool;
 using UnrealBuildTool;
 
@@ -92,5 +95,27 @@ public static class DotNetSdkUtilities
         }
         
         File.Copy(SourceGlobalJsonPath, DestinationGlobalJsonPath, overwrite: true);
+        AddPluginSdkSearchPath(DestinationGlobalJsonPath, ScriptDirectory, PluginRootDirectory);
+    }
+
+    private static void AddPluginSdkSearchPath(string globalJsonPath, string scriptDirectory, string pluginRoot)
+    {
+        string platform = OperatingSystem.IsWindows() ? "win" : OperatingSystem.IsMacOS() ? "osx" : "linux";
+        string architecture = RuntimeInformation.ProcessArchitecture switch
+        {
+            Architecture.X64 => "x64",
+            Architecture.Arm64 => "arm64",
+            _ => throw new PlatformNotSupportedException($"Unsupported .NET SDK host architecture: {RuntimeInformation.ProcessArchitecture}")
+        };
+        string sdkRoot = Path.Combine(pluginRoot, "ThirdParty", "DotNet", "sdk", $"{platform}-{architecture}");
+        string relativeSdkRoot = Path.GetRelativePath(scriptDirectory, sdkRoot).Replace('\\', '/');
+
+        JsonObject document = JsonNode.Parse(File.ReadAllText(globalJsonPath))?.AsObject()
+            ?? throw new InvalidDataException($"Invalid global.json at '{globalJsonPath}'.");
+        JsonObject sdk = document["sdk"]?.AsObject()
+            ?? throw new InvalidDataException($"Missing sdk section in '{globalJsonPath}'.");
+        sdk["paths"] = new JsonArray(relativeSdkRoot, "$host$");
+
+        File.WriteAllText(globalJsonPath, document.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
     }
 }
