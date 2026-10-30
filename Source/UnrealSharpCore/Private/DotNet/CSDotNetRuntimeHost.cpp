@@ -193,14 +193,12 @@ load_assembly_and_get_function_pointer_fn FCSDotNetRuntimeHost::ConfigureRuntime
 	          DotNetUtilities::IsSelfContainedRuntimeConfig(Layout.RuntimeConfigPath));
 
 	const FString ExecutablePath = FPlatformProcess::ExecutablePath();
-
-	DotNetUtilities::FHostStringConversion DotNetRootConv = StringCast<DotNetUtilities::FHostChar>(*Layout.DotNetRoot);
 	DotNetUtilities::FHostStringConversion HostPathConv = StringCast<DotNetUtilities::FHostChar>(*ExecutablePath);
 
 	hostfxr_initialize_parameters InitializeParameters;
 	InitializeParameters.size = sizeof(hostfxr_initialize_parameters);
 	InitializeParameters.host_path = reinterpret_cast<const char_t*>(HostPathConv.Get());
-	InitializeParameters.dotnet_root = reinterpret_cast<const char_t*>(DotNetRootConv.Get());
+	InitializeParameters.dotnet_root = nullptr;
 
 	hostfxr_handle HostFXR_Handle = nullptr;
 	int32 ErrorCode;
@@ -213,6 +211,8 @@ load_assembly_and_get_function_pointer_fn FCSDotNetRuntimeHost::ConfigureRuntime
 	}
 	else
 	{
+		DotNetUtilities::FHostStringConversion DotNetRootConv = StringCast<DotNetUtilities::FHostChar>(*Layout.DotNetRoot);
+		InitializeParameters.dotnet_root = reinterpret_cast<const char_t*>(DotNetRootConv.Get());
 		DotNetUtilities::FHostStringConversion RuntimeConfigConv = StringCast<DotNetUtilities::FHostChar>(*Layout.RuntimeConfigPath);
 		ErrorCode = Hostfxr_InitForRuntimeConfig(reinterpret_cast<const char_t*>(RuntimeConfigConv.Get()), &InitializeParameters, &HostFXR_Handle);
 	}

@@ -81,24 +81,18 @@ public static class FunctionUtilities
             return true;
         }
 
-        string sourceName;
-        if (function.SourceName.EndsWith("_Implementation"))
-        {
-            sourceName = function.SourceName.Substring(0, function.SourceName.Length - 15);
-        }
-        else
-        {
-            sourceName = function.SourceName;
-        }
-        
+        HashSet<string> functionNames = InterfaceFunctionIdentity.GetNames(function);
+
         UhtClass? currentClass = classOwner;
         while (currentClass != null)
         {
             foreach (UhtClass currentInterface in currentClass.GetInterfaces())
             {
                 UhtClass interfaceClass = currentInterface.GetInterfaceAlternateClass();
-                
-                if (interfaceClass.FindFunctionByName(sourceName) != null)
+
+                // Lookup *_Implementation
+                if (interfaceClass.Functions.Any(interfaceFunction =>
+                        functionNames.Overlaps(InterfaceFunctionIdentity.GetNames(interfaceFunction))))
                 {
                     return true;
                 }

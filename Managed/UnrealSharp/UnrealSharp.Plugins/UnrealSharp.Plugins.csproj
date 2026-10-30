@@ -4,10 +4,11 @@
     <Import Project="..\..\..\UnrealSharp.Build.props" Condition="Exists('..\..\..\UnrealSharp.Build.props')" />
     
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>$(UnrealSharpTargetFramework)</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
         <EnableDynamicLoading>true</EnableDynamicLoading>
 	    <NoWarn>$(NoWarn);1570;0649;0169;0108;0109</NoWarn>
     </PropertyGroup>

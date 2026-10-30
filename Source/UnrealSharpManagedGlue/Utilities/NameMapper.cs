@@ -183,7 +183,8 @@ public static class NameMapper
             functionName = functionName.Substring(3);
         }
 
-        if (function.IsInterfaceFunction() && functionName.EndsWith("_Implementation"))
+        bool isNativeInterfaceImplementation = function.IsInterfaceFunction() && functionName.EndsWith("_Implementation");
+        if (isNativeInterfaceImplementation)
         {
             functionName = functionName.Substring(0, functionName.Length - 15);
         }
@@ -193,12 +194,16 @@ public static class NameMapper
             return functionName;
         }
         
-        functionName = TryResolveConflictingName(function, functionName);
+        // UHT adds "_Implementation" to BlueprintNativeEvent interface methods.
+        // This is still the interface method implementation
+        // Preserve the interface method name in managed code.
+        // Only rename it when there is a real conflict with another member.
+        functionName = TryResolveConflictingName(function, functionName, isNativeInterfaceImplementation);
 
         return functionName;
     }
     
-    public static string TryResolveConflictingName(UhtType type, string scriptName)
+    public static string TryResolveConflictingName(UhtType type, string scriptName, bool ignoreInterfaceFunctionConflict = false)
     {
         UhtType outer = type.Outer!;
 
@@ -233,7 +238,7 @@ public static class NameMapper
         
         bool isConflicting = IsConflictingWithChild(outer.Children);
         
-        if (!isConflicting && outer is UhtClass outerClass)
+        if (!isConflicting && !ignoreInterfaceFunctionConflict && outer is UhtClass outerClass)
         {
             UhtFunction? function = FindInterfaceFunction(outerClass, scriptName);
 

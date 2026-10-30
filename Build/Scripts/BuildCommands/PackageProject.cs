@@ -45,6 +45,7 @@ public class PackageProject : BuildCommand
         ValidateOptions(options);
         LogOptions(options);
 
+        DotNetUtilities.ConfigurePluginDotNetRoot(this.GetUnrealSharpRootFolder());
         DotNetSdkUtilities.CopyGlobalJson(this);
 
         string PublishFolder = PathUtilities.BuildOutputPath(options.ArchiveDirectory);

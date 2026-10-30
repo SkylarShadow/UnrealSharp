@@ -80,22 +80,17 @@ bool UnrealSharp::Build::BuildUserSolution(const FCSCommandError& OnError)
 void UnrealSharp::Build::BuildArguments(const FString& BuildAction, const TMap<FString, FString>* ActionArgs, FString& OutArgs)
 {
 	const FString PluginFolder = FPaths::ConvertRelativePathToFull(IPluginManager::Get().FindPlugin(UE_PLUGIN_NAME)->GetBaseDir());
-	const FString ProjectFolder = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
 	const FString EngineFolder = FPaths::ConvertRelativePathToFull(FPaths::EngineDir());
 	const FString ProjectFile = FPaths::ConvertRelativePathToFull(FPaths::GetProjectFilePath());
 	
 	OutArgs.Reset();
 	OutArgs += BuildAction;
-	if (FPaths::IsUnderDirectory(PluginFolder, ProjectFolder))
+	if (!FPaths::IsUnderDirectory(PluginFolder, EngineFolder))
 	{
-		// Use the same discovery and build-record root as -ScriptsForProject.
-		// Reading the legacy Build/Scripts root too can load duplicate records.
-		OutArgs += FString::Printf(TEXT(" -ScriptDir=\"%s\""), *ProjectFolder);
-	}
-	else if (!FPaths::IsUnderDirectory(PluginFolder, EngineFolder))
-	{
-		// External plugins are not covered by the default engine/project roots.
-		OutArgs += FString::Printf(TEXT(" -ScriptDir=\"%s\""), *FPaths::Combine(PluginFolder, TEXT("Build"), TEXT("Scripts")));
+		// Scope discovery to this plugin's automation scripts rather than the project root (Saved/StagedBuilds)
+		// otherwise it will load an older staged copy
+		const FString PluginScriptsFolder = FPaths::Combine(PluginFolder, TEXT("Build"), TEXT("Scripts"));
+		OutArgs += FString::Printf(TEXT(" -ScriptDir=\"%s\""), *PluginScriptsFolder);
 	}
 	// -Project selects the command target; -ScriptsForProject also scopes UAT script discovery.
 	OutArgs += FString::Printf(TEXT(" -ScriptsForProject=\"%s\" -Project=\"%s\""), *ProjectFile, *ProjectFile);

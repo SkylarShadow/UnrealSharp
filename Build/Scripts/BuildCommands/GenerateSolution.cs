@@ -37,6 +37,7 @@ public class GenerateSolution : BuildCommand
 
         LoggerUtilities.LogUnrealSharpInfo($"Generating solution '{SolutionName}.{SolutionFormat}' in '{OutputFolder}'...");
         
+        DotNetUtilities.ConfigurePluginDotNetRoot(this.GetUnrealSharpRootFolder());
         DotNetSdkUtilities.CopyGlobalJson(this);
         CreateEmptySolution(OutputFolder, SolutionName);
 

@@ -92,12 +92,29 @@ public static class ClassUtilities
         List<UhtFunction> autocastFunctions)
     {
         List<UhtFunction> exportedFunctions = new();
+        bool isInterfaceType = classObj.HasAnyFlags(EClassFlags.Interface);
+
+        HashSet<string> interfaceFunctionNames = new(StringComparer.Ordinal);
+        foreach (UhtClass declaration in classObj.GetInterfaces())
+        {
+            UhtClass interfaceClass = declaration.GetInterfaceAlternateClass();
+            foreach (UhtFunction interfaceFunction in interfaceClass.Functions)
+            {
+                interfaceFunctionNames.UnionWith(InterfaceFunctionIdentity.GetNames(interfaceFunction));
+            }
+        }
+
+        bool ImplementsInterfaceFunction(UhtFunction function)
+        {
+            return InterfaceFunctionIdentity.GetNames(function).Overlaps(interfaceFunctionNames);
+        }
 
         bool HasFunction(List<UhtFunction> functionsToCheck, UhtFunction functionToTest)
         {
+            HashSet<string> testNames = InterfaceFunctionIdentity.GetNames(functionToTest);
             foreach (UhtFunction function in functionsToCheck)
             {
-                if (function.SourceName == functionToTest.SourceName || function.CppImplName == functionToTest.CppImplName)
+                if (InterfaceFunctionIdentity.GetNames(function).Overlaps(testNames))
                 {
                     return true;
                 }
@@ -108,12 +125,21 @@ public static class ClassUtilities
 
         foreach (UhtFunction function in classObj.Functions)
         {
-            if (!function.CanExportFunction() || function.IsAnyPropertyGetter() || function.IsAnyPropertySetter())
+            bool isInterfaceImplementation = isInterfaceType || ImplementsInterfaceFunction(function);
+            if (!function.CanExportFunction() || (!isInterfaceImplementation && (function.IsAnyPropertyGetter() || function.IsAnyPropertySetter())))
             {
                 continue;
             }
 
-            if (function.IsBlueprintEvent())
+            if (isInterfaceType && function.IsBlueprintEvent()) //Is Interface and BlueprintEvent 
+            {
+                exportedOverrides.Add(function);
+            }
+            else if (isInterfaceImplementation) //interface but not BlueprintEvent
+            {
+                functions.Add(function);
+            }
+            else if (function.IsBlueprintEvent())
             {
                 exportedOverrides.Add(function);
             }
@@ -154,7 +180,7 @@ public static class ClassUtilities
             UhtClass interfaceClass = declaration.GetInterfaceAlternateClass();
             foreach (UhtFunction function in interfaceClass.Functions)
             {
-                if (function.MakeGetterSetterPair(getSetOverrides) || HasFunction(exportedFunctions, function) || !function.CanExportFunction())
+                if (HasFunction(exportedFunctions, function) || !function.CanExportFunction()) //Already exported
                 {
                     continue;
                 }

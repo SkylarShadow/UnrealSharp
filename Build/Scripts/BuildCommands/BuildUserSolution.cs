@@ -17,6 +17,10 @@ public class BuildUserSolution : BuildCommand
     public override void ExecuteBuild()
     {
         ManagedBuildTarget Target = ManagedBuildTarget.FromCommand(this);
+        string PluginRoot = this.GetUnrealSharpRootFolder();
+        DotNetUtilities.ConfigurePluginDotNetRoot(PluginRoot);
+        ManagedRuntimeSyncUtilities.SyncPluginBootstrap(PluginRoot, Target.Configuration);
+
         List<FileInfo> Projects = this.GetManagedProjectFiles(Target)
             .Where(file => Target.Type == TargetType.Editor || !ProjectUtilities.IsEditorOnlyProject(file.FullName))
             .ToList();

@@ -24,8 +24,12 @@ public class BuildEmitLoadOrder : BuildCommand
 
     public override void ExecuteBuild()
     {
+        string PluginRoot = this.GetUnrealSharpRootFolder();
+        DotNetUtilities.ConfigurePluginDotNetRoot(PluginRoot);
+
         string SolutionPath = ParseRequiredStringParam("SolutionDirectory");
         UnrealTargetConfiguration TargetConfiguration = ParseRequiredEnumParamEnum<UnrealTargetConfiguration>("TargetConfiguration");
+        ManagedBuildToolsUtilities.EnsureStaged(PluginRoot, TargetConfiguration, forceBuild: false);
         string OutputPath = ParseRequiredStringParam("OutputPath");
         string LoadOrderName = ParseRequiredStringParam("LoadOrderName");
         string[] Projects = ParseParamValues("Projects");

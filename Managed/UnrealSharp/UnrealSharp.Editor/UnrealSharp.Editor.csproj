@@ -3,11 +3,14 @@
     <Import Project="..\..\..\UnrealSharp.Shared.props" Condition="Exists('..\..\..\UnrealSharp.Shared.props')" />
 
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>$(UnrealSharpTargetFramework)</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <EnableDynamicLoading>true</EnableDynamicLoading>
+        <!-- Use the source-generator project references below instead of stale shared binaries. -->
+        <SkipIncludeSharedAnalyzers>true</SkipIncludeSharedAnalyzers>
+        <SkipIncludeSharedReferences>true</SkipIncludeSharedReferences>
         <IsPublishable Condition="'$(UETargetType)' != 'Editor'">false</IsPublishable>
         <IsEditorOnly>true</IsEditorOnly>
     </PropertyGroup>

@@ -54,7 +54,8 @@ public static class SolutionManager
         try
         {
             string fullSolutionPath = Path.GetFullPath(solutionPath);
-            await UnrealSharpWorkspace.OpenSolutionAsync(fullSolutionPath);
+            await PluginDotNetSdkEnvironment.RunAsync(
+                () => UnrealSharpWorkspace.OpenSolutionAsync(fullSolutionPath));
             
             IList<Project> projects = UnrealSharpWorkspace.CurrentSolution.Projects.ToList();
         
@@ -220,7 +221,8 @@ public static class SolutionManager
     
     private static async Task AddProjectAsync_Internal(string projectPath)
     {
-        Project project = await UnrealSharpWorkspace.OpenProjectAsync(projectPath);
+        Project project = await PluginDotNetSdkEnvironment.RunAsync(
+            () => UnrealSharpWorkspace.OpenProjectAsync(projectPath));
         await ProcessProject(project);
     }
     

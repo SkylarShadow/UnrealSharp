@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <UnrealSharpTargetFramework Condition="'$(UnrealSharpTargetFramework)' == ''">net11.0</UnrealSharpTargetFramework>
+    <TargetFramework>$(UnrealSharpTargetFramework)</TargetFramework>
     <SolutionDir Condition="'$(SolutionDir)' == ''">$(MSBuildThisFileDirectory)..\..\</SolutionDir>
     <UnrealSharpPluginDir>$(MSBuildThisFileDirectory)</UnrealSharpPluginDir>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -11,7 +12,7 @@
   <Import Project="$(UnrealSharpPluginDir)UnrealSharp.AOT.props" Condition="Exists('$(UnrealSharpPluginDir)UnrealSharp.AOT.props')" />
   <Import Project="$(UnrealSharpPluginDir)UnrealSharp.Build.props" Condition="Exists('$(UnrealSharpPluginDir)UnrealSharp.Build.props')" />
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(SkipIncludeSharedReferences)' != 'true'">
   
     <Reference Include="UnrealSharp">
       <HintPath>$(UnrealSharpPluginDir)Binaries\Managed\$(TargetFramework)\UnrealSharp.dll</HintPath>
@@ -35,14 +36,15 @@
     
   </ItemGroup>
 
-  <ItemGroup Condition="'$(SkipIncludeAnalyzers)' == ''">
+  <!--Avoid loading an older copy from Binaries\Managed -->
+  <ItemGroup Condition="'$(SkipIncludeAnalyzers)' == '' And '$(SkipIncludeSharedAnalyzers)' != 'true'">
     <Analyzer Include="$(UnrealSharpPluginDir)Binaries\Managed\netstandard2.0\Newtonsoft.Json.dll" Private="false" CopyToPublishDirectory="Never" />
     <Analyzer Include="$(UnrealSharpPluginDir)Binaries\Managed\netstandard2.0\UnrealSharp.GlueGenerator.dll" Private="false" CopyToPublishDirectory="Never" />
     <Analyzer Include="$(UnrealSharpPluginDir)Binaries\Managed\netstandard2.0\UnrealSharp.Analyzers.dll" Private="false" CopyToPublishDirectory="Never" />
     <Analyzer Include="$(UnrealSharpPluginDir)Binaries\Managed\netstandard2.0\UnrealSharp.CodeFixer.dll" Private="false" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(SkipIncludeAnalyzers)' == '' And '$(SkipIncludeSharedAnalyzers)' != 'true'">
     <Analyzer Include="$(UnrealSharpPluginDir)Binaries\Managed\netstandard2.0\UnrealSharp.SourceGenerators.dll" Private="false" CopyToPublishDirectory="Never" />
   </ItemGroup>
 </Project>
