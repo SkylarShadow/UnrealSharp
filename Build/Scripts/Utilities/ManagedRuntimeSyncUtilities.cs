@@ -12,19 +12,25 @@ public static class ManagedRuntimeSyncUtilities
     {
         string targetFramework = DotNetUtilities.Version;
         string configuration = buildConfiguration.GetDotNetBuildConfiguration();
-        string projectFolder = Path.Combine(pluginRoot, "Managed", "UnrealSharp", "UnrealSharp.Plugins");
-        string outputFolder = Path.Combine(projectFolder, "bin", configuration, targetFramework);
+        string managedRoot = Path.Combine(pluginRoot, "Managed", "UnrealSharp");
+        string editorProjectFolder = Path.Combine(managedRoot, "UnrealSharp.Editor");
+        string pluginsProjectFolder = Path.Combine(managedRoot, "UnrealSharp.Plugins");
+        string editorOutputFolder = Path.Combine(editorProjectFolder, "bin", configuration, targetFramework);
+        string pluginsOutputFolder = Path.Combine(pluginsProjectFolder, "bin", configuration, targetFramework);
         string destinationFolder = Path.Combine(pluginRoot, "Binaries", "Managed", targetFramework);
 
         Directory.CreateDirectory(destinationFolder);
+        ApplyPendingFile(destinationFolder, "UnrealSharp.Editor.dll");
+        ApplyPendingFile(destinationFolder, "UnrealSharp.Editor.pdb");
         ApplyPendingFile(destinationFolder, "UnrealSharp.Plugins.dll");
         ApplyPendingFile(destinationFolder, "UnrealSharp.Plugins.pdb");
 
-        string builtAssembly = Path.Combine(outputFolder, "UnrealSharp.Plugins.dll");
-        if (NeedsBuild(pluginRoot, builtAssembly))
+        string editorAssembly = Path.Combine(editorOutputFolder, "UnrealSharp.Editor.dll");
+        string pluginsAssembly = Path.Combine(pluginsOutputFolder, "UnrealSharp.Plugins.dll");
+        if (NeedsBuild(pluginRoot, editorAssembly) || NeedsBuild(pluginRoot, pluginsAssembly))
         {
             BuildCommands.BuildSolution.RunBuild(
-                projectFolder,
+                editorProjectFolder,
                 buildConfiguration,
                 publish: false,
                 [
@@ -34,8 +40,10 @@ public static class ManagedRuntimeSyncUtilities
                 ]);
         }
 
-        CopyOrDefer(outputFolder, destinationFolder, "UnrealSharp.Plugins.dll");
-        CopyOrDefer(outputFolder, destinationFolder, "UnrealSharp.Plugins.pdb", required: false);
+        CopyOrDefer(editorOutputFolder, destinationFolder, "UnrealSharp.Editor.dll");
+        CopyOrDefer(editorOutputFolder, destinationFolder, "UnrealSharp.Editor.pdb", required: false);
+        CopyOrDefer(pluginsOutputFolder, destinationFolder, "UnrealSharp.Plugins.dll");
+        CopyOrDefer(pluginsOutputFolder, destinationFolder, "UnrealSharp.Plugins.pdb", required: false);
     }
 
     private static bool NeedsBuild(string pluginRoot, string builtAssembly)

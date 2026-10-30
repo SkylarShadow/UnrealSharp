@@ -85,3 +85,4 @@ obj/
 !UnrealSharp.Automation.props
 
 ThirdParty/**
+/Managed/Binaries

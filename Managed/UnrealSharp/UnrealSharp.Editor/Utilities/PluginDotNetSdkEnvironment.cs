@@ -49,17 +49,18 @@ internal static class PluginDotNetSdkEnvironment
 
     private static (string Root, string Executable, string Architecture) ResolvePluginSdk()
     {
-        string assemblyPath = typeof(PluginDotNetSdkEnvironment).Assembly.Location;
-        DirectoryInfo? directory = new FileInfo(assemblyPath).Directory;
-        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "UnrealSharp.uplugin")))
-        {
-            directory = directory.Parent;
-        }
+        IEnumerable<string?> candidates = AppDomain.CurrentDomain.GetAssemblies()
+            .Select(assembly => assembly.Location)
+            .Append(AppDomain.CurrentDomain.GetData("APP_CONTEXT_BASE_DIRECTORY") as string)
+            .Append(Environment.CurrentDirectory);
 
-        if (directory == null)
+        DirectoryInfo? pluginRoot = candidates
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Select(FindPluginRoot)
+            .FirstOrDefault(root => root != null);
+        if (pluginRoot == null)
         {
-            throw new DirectoryNotFoundException(
-                $"Could not locate the UnrealSharp plugin root from managed assembly '{assemblyPath}'.");
+            throw new DirectoryNotFoundException("Could not locate the UnrealSharp plugin root.");
         }
 
         string platform = OperatingSystem.IsWindows()
@@ -78,7 +79,7 @@ internal static class PluginDotNetSdkEnvironment
                 $"Unsupported .NET SDK host architecture: {RuntimeInformation.ProcessArchitecture}")
         };
 
-        string dotNetRoot = Path.Combine(directory.FullName, "ThirdParty", "DotNet", "sdk", $"{platform}-{architecture}");
+        string dotNetRoot = Path.Combine(pluginRoot.FullName, "ThirdParty", "DotNet", "sdk", $"{platform}-{architecture}");
         string executable = Path.Combine(dotNetRoot, OperatingSystem.IsWindows() ? "dotnet.exe" : "dotnet");
         if (!File.Exists(executable) || !Directory.Exists(Path.Combine(dotNetRoot, "sdk")))
         {
@@ -86,5 +87,43 @@ internal static class PluginDotNetSdkEnvironment
         }
 
         return (dotNetRoot, executable, architecture);
+    }
+
+    private static DirectoryInfo? FindPluginRoot(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        DirectoryInfo? directory;
+        try
+        {
+            directory = Directory.Exists(path)
+                ? new DirectoryInfo(path)
+                : new FileInfo(path).Directory;
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
+
+        while (directory != null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "UnrealSharp.uplugin")))
+            {
+                return directory;
+            }
+
+            string projectPlugin = Path.Combine(directory.FullName, "Plugins", "UnrealSharp");
+            if (File.Exists(Path.Combine(projectPlugin, "UnrealSharp.uplugin")))
+            {
+                return new DirectoryInfo(projectPlugin);
+            }
+
+            directory = directory.Parent;
+        }
+
+        return null;
     }
 }
