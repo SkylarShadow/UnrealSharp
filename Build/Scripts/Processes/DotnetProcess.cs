@@ -22,9 +22,6 @@ public class DotnetProcess : BuildToolProcess
         StartInfo.Environment["DOTNET_ROOT_ARM64"] = null;
         StartInfo.Environment[architectureVariable] = DotNetRoot;
         StartInfo.Environment["DOTNET_MULTILEVEL_LOOKUP"] = "0";
-        StartInfo.Environment["MSBuildExtensionsPath"] = LatestDotNetSdkPath;
-        StartInfo.Environment["MSBUILD_EXE_PATH"] = Path.Combine(LatestDotNetSdkPath, "MSBuild.dll");
-        StartInfo.Environment["MSBuildSDKsPath"] = Path.Combine(LatestDotNetSdkPath, "Sdks");
         StartInfo.Environment["DOTNET_ROLL_FORWARD"] = "LatestMinor";
     }
 }

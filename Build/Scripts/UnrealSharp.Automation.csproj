@@ -2,7 +2,6 @@
   
   <Import Project="UnrealSharp.Automation.csproj.props" Condition="Exists('UnrealSharp.Automation.csproj.props')" />
   <Import Project="$(EngineDir)\Source\Programs\Shared\UnrealEngine.csproj.props" />
-  <Import Project="..\..\UnrealSharp.Automation.props" Condition="Exists('..\..\UnrealSharp.Automation.props')" />
   
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Development</Configuration>

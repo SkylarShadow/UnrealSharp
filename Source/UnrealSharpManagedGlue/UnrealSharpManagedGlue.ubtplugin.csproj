@@ -2,7 +2,6 @@
     
     <Import Project="UnrealSharpManagedGlue.ubtplugin.csproj.props" Condition="Exists('UnrealSharpManagedGlue.ubtplugin.csproj.props')" />
     <Import Project="$(EngineDir)\Source\Programs\Shared\UnrealEngine.csproj.props" />
-    <Import Project="..\..\UnrealSharp.Automation.props" Condition="Exists('..\..\UnrealSharp.Automation.props')" />
 
     <ItemGroup>
         <!-- UBT tracks project references recursively when validating script modules. -->
